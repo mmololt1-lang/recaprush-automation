@@ -1,0 +1,41 @@
+name: Submit RecapRush Sitemap
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    - cron: "0 */6 * * *"
+
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  submit-sitemap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: "projects/46408462449/locations/global/workloadIdentityPools/github/providers/github"
+          service_account: "recaprush@project-ae93a0cf-a61e-4e55-962.iam.gserviceaccount.com"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install requests google-auth
+
+      - name: Submit sitemap to Google
+        run: python submit_sitemap.py
