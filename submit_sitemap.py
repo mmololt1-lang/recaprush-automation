@@ -1,9 +1,9 @@
-import os
-import json
 import requests
 from urllib.parse import quote
-from google.oauth2 import service_account
+
+import google.auth
 from google.auth.transport.requests import Request
+
 
 SITE_URL = "https://recaprush.blogspot.com/"
 SITEMAP_URL = "https://recaprush.blogspot.com/sitemap.xml"
@@ -12,25 +12,18 @@ SCOPES = [
     "https://www.googleapis.com/auth/webmasters"
 ]
 
-service_account_info = json.loads(
-    os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"]
-)
 
-credentials = service_account.Credentials.from_service_account_info(
-    service_account_info,
-    scopes=SCOPES
-)
+def get_credentials():
+    credentials, project = google.auth.default(scopes=SCOPES)
 
-
-def get_access_token():
     if not credentials.valid:
         credentials.refresh(Request())
 
-    return credentials.token
+    return credentials
 
 
 def submit_sitemap():
-    token = get_access_token()
+    credentials = get_credentials()
 
     site_encoded = quote(SITE_URL, safe="")
     sitemap_encoded = quote(SITEMAP_URL, safe="")
@@ -41,7 +34,8 @@ def submit_sitemap():
     )
 
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {credentials.token}",
+        "Content-Type": "application/json"
     }
 
     response = requests.put(
@@ -51,10 +45,10 @@ def submit_sitemap():
     )
 
     if response.status_code in (200, 204):
-        print("✅ Sitemap Google Search Console руу амжилттай илгээгдлээ.")
+        print("✅ RecapRush sitemap submitted successfully.")
         print(SITEMAP_URL)
     else:
-        print("❌ Sitemap submit хийхэд алдаа гарлаа.")
+        print("❌ Sitemap submission failed.")
         print("Status:", response.status_code)
         print(response.text)
         raise SystemExit(1)
