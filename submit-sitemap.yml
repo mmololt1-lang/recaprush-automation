@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   submit-sitemap:
     runs-on: ubuntu-latest
@@ -17,6 +21,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: "projects/46408462449/locations/global/workloadIdentityPools/github/providers/github"
+          service_account: "recaprush@project-ae93a0cf-a61e-4e55-962.iam.gserviceaccount.com"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,6 +38,4 @@ jobs:
           pip install requests google-auth
 
       - name: Submit sitemap to Google
-        env:
-          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
         run: python submit_sitemap.py
